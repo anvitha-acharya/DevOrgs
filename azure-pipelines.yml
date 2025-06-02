@@ -1,0 +1,27 @@
+# Starter pipeline
+# Start with a minimal pipeline that you can customize to build and deploy your code.
+# Add steps that build, run tests, deploy, and more:
+# https://aka.ms/yaml
+
+trigger:
+- main
+
+pool:
+  vmImage: ubuntu-latest
+
+steps:
+- script: echo Hello, world!
+  displayName: 'Run a one-line script'
+
+# 3. OWASP Dependency Check
+- task: UseDotNet@2
+  inputs:
+    packageType: 'sdk'
+    version: '6.x'
+  displayName: 'Install .NET SDK for OWASP Dependency Check'  # OWASP needs Java/.NET SDK sometimes
+
+- script: |
+    curl -L -o dependency-check.zip https://github.com/jeremylong/DependencyCheck/releases/latest/download/dependency-check-8.4.0-release.zip
+    unzip dependency-check.zip -d dependency-check
+    ./dependency-check/bin/dependency-check.sh --project "AzureCIProject" --scan . --format "ALL" --out owasp-report
+  displayName: 'Run OWASP Dependency Check'
