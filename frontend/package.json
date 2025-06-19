@@ -7,7 +7,7 @@
     "dev": "vite --host 0.0.0.0",
     "build": "tsc -b && vite build --outDir dist",
     "lint": "bunx biome lint --write && bunx tsc --noEmit",
-    "lint:ci": "bunx biome lint --formatter=codeframe > biome-report.txt || echo 'biome lint failed'",
+    "lint:ci": "npx biome lint > biome-report.txt || echo 'Biome lint failed'",
     "format": "bunx biome format --write",
     "preview": "vite preview"
   },
@@ -21,7 +21,7 @@
     "tailwindcss-animate": "^1.0.7"
   },
   "devDependencies": {
-    "@biomejs/biome": "1.9.4",
+    "@biomejs/biome": "^1.9.4",
     "@eslint/js": "^9.29.0",
     "@types/axios": "^0.9.36",
     "@types/react": "^18.3.22",
