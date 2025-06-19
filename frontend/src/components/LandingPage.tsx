@@ -44,8 +44,12 @@ export function LandingPage() {
   const res = await axios.post<SignupResponse>('http://localhost:5000/api/auth/signup', formData);
         alert(res.data.message);
       } catch (err: unknown) {
-        alert(err.response?.data?.error || 'Signup failed');
-      }
+  if (axios.isAxiosError(err)) {
+    alert(err.response?.data?.error || 'Signup failed');
+  } else {
+    alert('An unexpected error occurred');
+  }
+}
       return;
     }
 
