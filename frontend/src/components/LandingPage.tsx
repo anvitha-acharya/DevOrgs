@@ -43,7 +43,7 @@ export function LandingPage() {
       try {
   const res = await axios.post<SignupResponse>('http://localhost:5000/api/auth/signup', formData);
         alert(res.data.message);
-      } catch (err: any) {
+      } catch (err: unknown) {
         alert(err.response?.data?.error || 'Signup failed');
       }
       return;
