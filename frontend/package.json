@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite --host 0.0.0.0",
     "build": "tsc -b && vite build --outDir dist",
+    "build:no-ts": "vite build --outDir dist",
     "lint": "bunx biome lint --write && bunx tsc --noEmit",
     "lint:ci": "npx biome lint > biome-report.txt || echo 'Biome lint failed'",
     "format": "bunx biome format --write",
