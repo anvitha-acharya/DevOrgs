@@ -5,7 +5,7 @@ FROM node:18-alpine AS builder
 WORKDIR /app
 COPY . .
 RUN npm install
-RUN npm run build
+RUN npm run build:no-ts
 
 # Stage 2: Serve the application
 FROM node:18-alpine
