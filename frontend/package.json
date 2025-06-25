@@ -8,7 +8,7 @@
     "build": "tsc -b && vite build --outDir dist",
     "build:no-ts": "vite build --outDir dist",
     "lint": "bunx biome lint --write && bunx tsc --noEmit",
-    "lint:ci": "npx biome lint > biome-report.txt || echo 'Biome lint failed'",
+    "lint:ci": "npx biome lint --apply > biome-report.txt",
     "format": "bunx biome format --write",
     "preview": "vite preview"
   },
