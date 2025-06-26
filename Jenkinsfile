@@ -107,16 +107,17 @@ stage('License Checker') {
         }
         stage('SonarQube Code Analysis') {
     environment {
-        SONAR_TOKEN = credentials('sonar') 
+        SONAR_TOKEN = credentials('sonar2') 
     }
     steps {
         withSonarQubeEnv('MySonarQube') { 
             sh """
                 ${SCANNER_HOME}/bin/sonar-scanner \
                 -X \
-                -Dsonar.projectKey=DevOrgs \
-                -Dsonar.projectName=DevOrgs \
+                -Dsonar.projectKey=devops \
+                -Dsonar.projectName=devops \
                 -Dsonar.sources=. \
+                -Dsonar.exclusions=**/dependency-check-report/**,**/licenses.html \
                 -Dsonar.java.binaries=. \
                 -Dsonar.login=$SONAR_TOKEN
             """
