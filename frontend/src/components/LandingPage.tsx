@@ -2,6 +2,14 @@ interface SignupResponse {
   message: string;
 }
 
+interface LoginResponse {
+  token: string;
+  user: User; // Assuming the backend returns a user object matching the User interface
+}
+
+interface SignupResponse {
+  message: string;
+}
 import type React from 'react';
 import { useState, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
@@ -31,48 +39,38 @@ export function LandingPage() {
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
-    const API_BASE_URL = import.meta.env.VITE_API_URL ;
+    const API_BASE_URL = import.meta.env.VITE_API_URL;
     e.preventDefault();
 
-    if (!isLogin) {
-      const passwordValid = /^(?=.*[!@#$%^&*])[A-Za-z\d!@#$%^&*]{8,}$/.test(formData.password);
-      if (!passwordValid) {
-        alert('Password must be at least 8 characters and contain a special character.');
-        return;
-      }
+    try {
+      const endpoint = isLogin ? '/auth/login' : '/auth/signup';
 
-      try {
-        const res = await axios.post<SignupResponse>(`${API_BASE_URL}/auth/signup`, formData);
-        alert(res.data.message);
-      } catch (err: any) {
-        if (err.response && err.response.data && err.response.data.error) {
-          alert(err.response.data.error);
-        } else {
-          alert('Signup failed');
+      if (!isLogin) {
+        // Signup logic
+        const passwordValid = /^(?=.*[!@#$%^&*])[A-Za-z\d!@#$%^&*]{8,}$/.test(formData.password);
+        if (!passwordValid) {
+          alert('Password must be at least 8 characters and contain a special character.');
+          return;
         }
+        const res = await axios.post<SignupResponse>(`${API_BASE_URL}${endpoint}`, formData);
+        alert(res.data.message); // Show signup success message
+        setIsLogin(true); // Automatically switch to login view
+      } else {
+        // Login logic
+        const res = await axios.post<LoginResponse>(`${API_BASE_URL}${endpoint}`, {
+          email: formData.email,
+          password: formData.password,
+        });
+        localStorage.setItem('token', res.data.token); // Store the JWT token
+        dispatch({ type: 'LOGIN', payload: res.data.user }); // Use the actual user data from the backend response
       }
-      return;
+    } catch (err: any) {
+      alert(err.response?.data?.error || `${isLogin ? 'Login' : 'Signup'} failed`);
     }
-
-    // Login logic
-    const user: User = {
-      id: Date.now().toString(),
-      name: formData.name || formData.email.split('@')[0],
-      email: formData.email,
-      role: formData.role,
-    };
-
-    dispatch({ type: 'LOGIN', payload: user });
   };
 
   const toggleDarkMode = () => {
-    dispatch({ type: 'TOGGLE_DARK_MODE' });
-  };
-
-  return (
-    <div className={`min-h-screen transition-colors duration-300 ${
-      state.darkMode ? 'dark bg-gray-900' : 'bg-gray-50'
-    }`}>
+    dispatch({ type: 'TOGGLE_DARK_MODE' });  };  return (    <div className={`min-h-screen transition-colors duration-300 ${      state.darkMode ? 'dark bg-gray-900' : 'bg-gray-50'    }`}>
       {/* Header */}
       <header className="flex justify-between items-center p-6">
         <div className="flex items-center space-x-2">
