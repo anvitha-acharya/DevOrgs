@@ -29,11 +29,17 @@ export function Dashboard() {
     return { total, completed, inProgress, todo };
   };
 
+  // Handle project updates from ProjectDetail
+  const handleProjectUpdate = (updatedProject: Project) => {
+    dispatch({ type: 'UPDATE_PROJECT', payload: updatedProject });
+  };
+
   if (selectedProject) {
     return (
       <ProjectDetail
         project={selectedProject}
         onBack={() => setSelectedProject(null)}
+        onProjectUpdate={handleProjectUpdate}
       />
     );
   }
@@ -283,7 +289,7 @@ export function Dashboard() {
               updatedAt: new Date(),
               members: [state.auth.user?.id || ''],
               invitedEmails: projectData.invitedEmails,
-              tasks: [],
+              tasks: [], // Start with empty tasks array - no dummy data
             };
             dispatch({ type: 'ADD_PROJECT', payload: newProject });
             setShowNewProjectModal(false);

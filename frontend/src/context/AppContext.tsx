@@ -1,7 +1,6 @@
 import type React from 'react';
 import { createContext, useContext, useReducer, type ReactNode } from 'react'
 import type { User, Project, Task, AuthState } from '../types';
-import { sampleProjects } from '../data/sampleData';
 
 interface AppState {
   auth: AuthState;
@@ -24,7 +23,7 @@ const initialState: AppState = {
     user: null,
     isAuthenticated: false,
   },
-  projects: sampleProjects,
+  projects: [],
   darkMode: false,
 };
 

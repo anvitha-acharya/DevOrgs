@@ -8,7 +8,7 @@ interface Task {
   description: string;
   status: 'todo' | 'in-progress' | 'completed';
   createdBy: string;
-  createdAt: string;
+  createdAt: string | Date;
 }
 
 interface Project {
@@ -20,52 +20,17 @@ interface Project {
 
 type TaskStatus = Task['status'];
 
-// Mock data structure
-const initialProject: Project = {
-  id: '1',
-  title: 'Project Management System',
-  description: 'A comprehensive project management tool with drag and drop functionality',
-  tasks: [
-    {
-      id: 'task-1',
-      title: 'Design Database Schema',
-      description: 'Create the database structure for the project management system',
-      status: 'todo',
-      createdBy: 'John Doe',
-      createdAt: '2024-01-15T10:30:00Z'
-    },
-    {
-      id: 'task-2',
-      title: 'Implement Authentication',
-      description: 'Set up user authentication and authorization',
-      status: 'in-progress',
-      createdBy: 'Jane Smith',
-      createdAt: '2024-01-16T14:20:00Z'
-    },
-    {
-      id: 'task-3',
-      title: 'Create Landing Page',
-      description: 'Design and develop the main landing page',
-      status: 'completed',
-      createdBy: 'Mike Johnson',
-      createdAt: '2024-01-14T09:15:00Z'
-    },
-    {
-      id: 'task-4',
-      title: 'Setup CI/CD Pipeline',
-      description: 'Configure continuous integration and deployment',
-      status: 'todo',
-      createdBy: 'Sarah Wilson',
-      createdAt: '2024-01-17T11:45:00Z'
-    }
-  ]
-};
+interface ProjectDetailProps {
+  project: Project | null;
+  onBack: () => void;
+  onProjectUpdate?: (project: Project) => void;
+}
 
-export function ProjectDetail() {
-  const [project, setProject] = useState<Project>(initialProject);
+export function ProjectDetail({ project, onBack, onProjectUpdate }: ProjectDetailProps) {
   const [darkMode, setDarkMode] = useState<boolean>(false);
   const [draggedTask, setDraggedTask] = useState<Task | null>(null);
   const [draggedOver, setDraggedOver] = useState<TaskStatus | null>(null);
+  const [currentProject, setCurrentProject] = useState<Project | null>(project);
 
   const handleDragStart = (e: React.DragEvent<HTMLDivElement>, task: Task): void => {
     setDraggedTask(task);
@@ -75,7 +40,7 @@ export function ProjectDetail() {
   };
 
   const handleDragOver = (e: React.DragEvent<HTMLDivElement>, status: TaskStatus): void => {
-    e.preventDefault();
+    e.preventDefault(); // Keep this for drag and drop to work
     e.dataTransfer.dropEffect = 'move';
     setDraggedOver(status);
   };
@@ -88,21 +53,31 @@ export function ProjectDetail() {
     e.preventDefault();
     setDraggedOver(null);
     
-    if (draggedTask && draggedTask.status !== newStatus) {
-      setProject(prev => ({
-        ...prev,
-        tasks: prev.tasks.map(task => 
+    if (draggedTask && draggedTask.status !== newStatus && currentProject) {
+      const updatedProject = {
+        ...currentProject,
+        tasks: currentProject.tasks.map(task => 
           task.id === draggedTask.id 
             ? { ...task, status: newStatus }
             : task
         )
-      }));
+      };
+      
+      setCurrentProject(updatedProject);
+      
+      // Notify parent component about the update
+      if (onProjectUpdate) {
+        onProjectUpdate(updatedProject);
+      }
     }
     setDraggedTask(null);
   };
 
   const getTasksByStatus = (status: TaskStatus): Task[] => {
-    return project.tasks.filter(task => task.status === status);
+    if (!currentProject) {
+      return []; // Return empty array if project is null
+    }
+    return currentProject.tasks.filter(task => task.status === status);
   };
 
   const renderColumn = (title: string, status: TaskStatus, color: string): JSX.Element => {
@@ -132,57 +107,73 @@ export function ProjectDetail() {
           onDragLeave={handleDragLeave}
           onDrop={(e: React.DragEvent<HTMLDivElement>) => handleDrop(e, status)}
         >
-          {tasks.map((task) => (
-            <div
-              key={task.id}
-              draggable
-              onDragStart={(e: React.DragEvent<HTMLDivElement>) => handleDragStart(e, task)}
-              className={`p-4 rounded-lg border transition-all duration-200 cursor-move select-none ${
-                draggedTask?.id === task.id
-                  ? 'opacity-50 transform rotate-2'
-                  : 'hover:shadow-md hover:scale-105'
-              } ${
-                darkMode
-                  ? 'bg-gray-700 border-gray-600 hover:border-gray-500'
-                  : 'bg-white border-gray-200 hover:border-gray-300'
-              }`}
-            >
-              <h4 className={`font-medium mb-2 ${
-                darkMode ? 'text-white' : 'text-gray-900'
-              }`}>
-                {task.title}
-              </h4>
-              {task.description && (
-                <p className={`text-sm mb-3 ${
-                  darkMode ? 'text-gray-400' : 'text-gray-600'
+          {tasks.length === 0 ? (
+            <div className={`text-center py-8 ${darkMode ? 'text-gray-500' : 'text-gray-400'}`}>
+              <p className="text-sm">No tasks in {title.toLowerCase()}</p>
+            </div>
+          ) : (
+            tasks.map((task) => (
+              <div
+                key={task.id}
+                draggable
+                onDragStart={(e: React.DragEvent<HTMLDivElement>) => handleDragStart(e, task)}
+                className={`p-4 rounded-lg border transition-all duration-200 cursor-move select-none ${
+                  draggedTask?.id === task.id
+                    ? 'opacity-50 transform rotate-2'
+                    : 'hover:shadow-md hover:scale-105'
+                } ${
+                  darkMode
+                    ? 'bg-gray-700 border-gray-600 hover:border-gray-500'
+                    : 'bg-white border-gray-200 hover:border-gray-300'
+                }`}
+              >
+                <h4 className={`font-medium mb-2 ${
+                  darkMode ? 'text-white' : 'text-gray-900'
                 }`}>
-                  {task.description}
-                </p>
-              )}
-              <div className="flex items-center justify-between text-xs">
-                <div className="flex items-center space-x-1">
-                  <User className={`h-3 w-3 ${
-                    darkMode ? 'text-gray-500' : 'text-gray-400'
-                  }`} />
-                  <span className={darkMode ? 'text-gray-500' : 'text-gray-400'}>
-                    {task.createdBy}
-                  </span>
-                </div>
-                <div className="flex items-center space-x-1">
-                  <Calendar className={`h-3 w-3 ${
-                    darkMode ? 'text-gray-500' : 'text-gray-400'
-                  }`} />
-                  <span className={darkMode ? 'text-gray-500' : 'text-gray-400'}>
-                    {new Date(task.createdAt).toLocaleDateString()}
-                  </span>
+                  {task.title}
+                </h4>
+                {task.description && (
+                  <p className={`text-sm mb-3 ${
+                    darkMode ? 'text-gray-400' : 'text-gray-600'
+                  }`}>
+                    {task.description}
+                  </p>
+                )}
+                <div className="flex items-center justify-between text-xs">
+                  <div className="flex items-center space-x-1">
+                    <User className={`h-3 w-3 ${
+                      darkMode ? 'text-gray-500' : 'text-gray-400'
+                    }`} />
+                    <span className={darkMode ? 'text-gray-500' : 'text-gray-400'}>
+                      {task.createdBy}
+                    </span>
+                  </div>
+                  <div className="flex items-center space-x-1">
+                    <Calendar className={`h-3 w-3 ${
+                      darkMode ? 'text-gray-500' : 'text-gray-400'
+                    }`} />
+                    <span className={darkMode ? 'text-gray-500' : 'text-gray-400'}>
+                      {task.createdAt instanceof Date 
+                        ? task.createdAt.toLocaleDateString()
+                        : new Date(task.createdAt).toLocaleDateString()
+                      }
+                    </span>
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
+            ))
+          )}
         </div>
       </div>
     );
   };
+
+  // Handle case where project data is not yet loaded
+  if (!currentProject) {
+    return (
+      <div className="flex justify-center items-center h-screen">Loading...</div>
+    );
+  }
 
   return (
     <div className={`min-h-screen transition-colors duration-300 ${
@@ -196,6 +187,7 @@ export function ProjectDetail() {
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
               <button
+                onClick={onBack}
                 className={`p-2 rounded-lg transition-colors duration-200 ${
                   darkMode
                     ? 'hover:bg-gray-700 text-gray-400'
@@ -208,12 +200,12 @@ export function ProjectDetail() {
                 <h1 className={`text-2xl font-bold ${
                   darkMode ? 'text-white' : 'text-gray-900'
                 }`}>
-                  {project.title}
+                  {currentProject.title}
                 </h1>
                 <p className={`text-sm ${
                   darkMode ? 'text-gray-400' : 'text-gray-500'
                 }`}>
-                  {project.description}
+                  {currentProject.description}
                 </p>
               </div>
             </div>
@@ -281,7 +273,7 @@ export function ProjectDetail() {
             <p className={`text-2xl font-bold ${
               darkMode ? 'text-white' : 'text-gray-900'
             }`}>
-              {project.tasks.length}
+              {currentProject.tasks.length}
             </p>
           </div>
           <div className={`p-4 rounded-lg ${
