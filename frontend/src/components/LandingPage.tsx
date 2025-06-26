@@ -259,7 +259,7 @@ export function LandingPage() {
                 }`}
               >
                 {isLogin
-                  ? "Don't have an account? Sign up"
+                  ? "Don't have an account? Sign up!"
                   : "Already have an account? Sign in"
                 }
               </button>

@@ -259,7 +259,7 @@ export function NewProjectModal({ onClose, onSubmit }: NewProjectModalProps) {
             <p className={`text-xs mt-2 ${
               state.darkMode ? 'text-gray-400' : 'text-gray-500'
             }`}>
-              Invited members will receive an email to join the project
+              Invited members will be added to the project
             </p>
           </div>
 
@@ -281,9 +281,10 @@ export function NewProjectModal({ onClose, onSubmit }: NewProjectModalProps) {
             >
               Create Project
             </button>
-            </div>
+          </div>
           </form>
         </div>
       </div>
+    
   );
 }
