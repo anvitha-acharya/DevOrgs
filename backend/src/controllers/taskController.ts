@@ -5,20 +5,22 @@ import User from '../models/User';
 import mongoose from 'mongoose';
 
 // Create a new task for a project
-export const createTask = async (req: Request, res: Response) => {
+export const createTask = async (req: Request, res: Response): Promise<void> => {
   try {
     const { projectId } = req.params;
     const { name, description, assignedTo, status, dueDate } = req.body;
     const userId = (req as any).user._id; // Assuming user ID is attached to the request
 
     if (!mongoose.Types.ObjectId.isValid(projectId)) {
-      return res.status(400).json({ message: 'Invalid project ID' });
+      res.status(400);
+      throw new Error('Invalid project ID');
     }
 
     const project = await Project.findById(projectId);
 
     if (!project) {
-      return res.status(404).json({ message: 'Project not found' });
+      res.status(404);
+      throw new Error('Project not found');
     }
 
     // Check if the user is the project owner or the collaborator
@@ -27,7 +29,8 @@ export const createTask = async (req: Request, res: Response) => {
     const isCollaborator = project.collaboratorEmail === userEmail;
 
     if (!isOwner && !isCollaborator) {
-      return res.status(403).json({ message: 'You do not have permission to create tasks in this project.' });
+      res.status(403);
+      throw new Error('You do not have permission to create tasks in this project.');
     }
 
 
@@ -50,24 +53,27 @@ export const createTask = async (req: Request, res: Response) => {
 
     res.status(201).json(savedTask);
   } catch (error: any) {
-    res.status(500).json({ message: error.message });
+    // Re-throw the error to be caught by express-async-handler
+    throw error;
   }
 };
 
 // Get all tasks for a project
-export const getTasksForProject = async (req: Request, res: Response) => {
+export const getTasksForProject = async (req: Request, res: Response): Promise<void> => {
   try {
     const { projectId } = req.params;
     const userId = (req as any).user._id; // Assuming user ID is attached to the request
 
     if (!mongoose.Types.ObjectId.isValid(projectId)) {
-      return res.status(400).json({ message: 'Invalid project ID' });
+      res.status(400);
+      throw new Error('Invalid project ID');
     }
 
     const project = await Project.findById(projectId);
 
     if (!project) {
-      return res.status(404).json({ message: 'Project not found' });
+      res.status(404);
+      throw new Error('Project not found');
     }
 
     // Check if the user is the project owner or the collaborator
@@ -75,32 +81,35 @@ export const getTasksForProject = async (req: Request, res: Response) => {
     const isOwner = project.owner.toString() === userId.toString();
     const isCollaborator = project.collaboratorEmail === userEmail;
     if (!isOwner && !isCollaborator) {
-      return res.status(403).json({ message: 'You do not have permission to view tasks for this project.' });
+      res.status(403);
+      throw new Error('You do not have permission to view tasks for this project.');
     }
 
     const tasks = await Task.find({ project: projectId }).populate('assignedTo', 'username email'); // Populate assignedTo with user info
 
     res.status(200).json(tasks);
   } catch (error: any) {
-    res.status(500).json({ message: error.message });
+    throw error;
   }
 };
 
 // Update a task
-export const updateTask = async (req: Request, res: Response) => {
+export const updateTask = async (req: Request, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
     const updates = req.body;
     const userId = (req as any).user._id; // Assuming user ID is attached to the request
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
-      return res.status(400).json({ message: 'Invalid task ID' });
+      res.status(400);
+      throw new Error('Invalid task ID');
     }
 
     const task = await Task.findById(id).populate('project');
 
     if (!task) {
-      return res.status(404).json({ message: 'Task not found' });
+      res.status(404);
+      throw new Error('Task not found');
     }
 
     const project = task.project as any;
@@ -113,7 +122,8 @@ export const updateTask = async (req: Request, res: Response) => {
 
 
     if (!isOwner && !isCollaborator && !isAssignedTo) {
-       return res.status(403).json({ message: 'You do not have permission to update this task' });
+      res.status(403);
+      throw new Error('You do not have permission to update this task');
     }
 
 
@@ -126,25 +136,27 @@ export const updateTask = async (req: Request, res: Response) => {
 
     res.status(200).json(updatedTask);
   } catch (error: any) {
-    res.status(500).json({ message: error.message });
+    throw error;
   }
 };
 
 // Delete a task
-export const deleteTask = async (req: Request, res: Response) => {
+export const deleteTask = async (req: Request, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
     const userId = (req as any).user._id; // Assuming user ID is attached to the request
 
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
-      return res.status(400).json({ message: 'Invalid task ID' });
+      res.status(400);
+      throw new Error('Invalid task ID');
     }
 
     const task = await Task.findById(id).populate('project');
 
     if (!task) {
-      return res.status(404).json({ message: 'Task not found' });
+      res.status(404);
+      throw new Error('Task not found');
     }
 
     const project = task.project as any;
@@ -154,7 +166,8 @@ export const deleteTask = async (req: Request, res: Response) => {
     const isOwner = project.owner.toString() === userId.toString();
     const isCollaborator = project.collaboratorEmail === userEmail;
     if (!isOwner && !isCollaborator) {
-      return res.status(403).json({ message: 'You do not have permission to delete this task.' });
+      res.status(403);
+      throw new Error('You do not have permission to delete this task.');
     }
 
 
@@ -166,6 +179,6 @@ export const deleteTask = async (req: Request, res: Response) => {
 
     res.status(200).json({ message: 'Task deleted successfully' });
   } catch (error: any) {
-    res.status(500).json({ message: error.message });
+    throw error;
   }
 };

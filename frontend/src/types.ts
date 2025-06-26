@@ -8,28 +8,30 @@ export interface User {
 }
 
 export interface Task {
-  id: string;
-  title: string;
+  _id: string; // Changed from id to _id to match backend
+  name: string; // Changed from title to name to match backend
   description: string;
-  status: 'todo' | 'in-progress' | 'completed';
+  status: 'todo' | 'in-progress' | 'done'; // Changed 'completed' to 'done'
   assignedTo?: string;
   createdBy: string;
   createdAt: Date;
   updatedAt: Date;
 }
+export type TaskStatus = Task['status'];
+
 
 export interface Project {
-  id: string;
-  title: string;
-  description: string;
-  startDate: Date;
-  endDate: Date;
-  createdBy: string;
+  _id: string; // Should be _id
+  name: string; // Should be name
+  description?: string;
+  startDate?: Date; // Use Date type if they are dates
+  endDate?: Date; // Use Date type if they are dates
+  createdBy: string; // Assuming this is the owner's ID
   createdAt: Date;
   updatedAt: Date;
-  members: string[];
+  members: string[]; // Assuming array of user IDs
   invitedEmails: string[];
-  tasks: Task[];
+  tasks: string[] | Task[]; // As we determined the API can return IDs or full tasks
 }
 
 export interface AuthState {

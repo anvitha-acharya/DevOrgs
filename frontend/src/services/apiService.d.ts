@@ -1,26 +1,8 @@
-interface Task {
-  _id: string;
-  name: string;
-  description?: string;
-  status: 'todo' | 'in-progress' | 'done';
-  assignedTo?: string;
-  createdAt: string;
-  project: string; // Assuming project ID is a string
-}
-
-interface Project {
-  _id: string;
-  name: string;
-  description?: string;
-  startDate?: string; // Assuming dates are strings in API response
-  endDate?: string;
-  collaboratorEmail?: string;
-  owner: string; // Assuming owner ID is a string
-  tasks: string[] | Task[]; // Tasks might be just IDs or full Task objects
-  createdAt: string;
-}
+import { Project, Task } from '../types';
+import axios from 'axios'; // If you need axios types within the declaration
 
 interface CreateProjectData {
+ _id?: string; // Allow _id for updates/creation if needed
   name: string;
   description?: string;
   startDate?: string;
@@ -42,7 +24,7 @@ interface SignupResponse {
 
 
 declare module './apiService' {
-  class ApiService {
+  class ApiService { // Renamed class from ApiService to Service
     setAuthToken(token: string | null): void;
     getAuthHeaders(): { 'Content-Type': string; Authorization?: string };
     request<T>(method: string, endpoint: string, data?: any): Promise<T>;
@@ -60,8 +42,8 @@ declare module './apiService' {
     deleteTask(taskId: string): Promise<{ message: string }>; // Assuming a message on successful deletion
     getUserProfile(): Promise<any>; // Define a UserProfile interface
     updateUserProfile(userData: any): Promise<any>; // Refine userData and return types
-  }
+ }
 
-  const apiServiceInstance: ApiService;
+  declare const apiServiceInstance: ApiService;
   export default apiServiceInstance;
 }

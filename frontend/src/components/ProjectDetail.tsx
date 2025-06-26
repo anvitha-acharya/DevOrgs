@@ -2,25 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { ArrowLeft, Calendar, User, Plus } from 'lucide-react';
 import apiService from '../services/apiService'; // Import the default exported instance
-
-// TypeScript types (ensure these match your backend response)
-interface Task {
-  _id: string;
-  name: string;
-  description?: string;
-  status: 'todo' | 'in-progress' | 'done'; // Ensure status values match backend
-  assignedTo?: string; // Assuming assignedTo is a string ID or name
-  createdAt: string;
-}
-
-interface Project {
-  _id: string;
-  name: string;
-  description?: string;
-  tasks: Task[];
-}
-
-type TaskStatus = Task['status'];
+import { Project, Task, TaskStatus } from '../types'; // Import types from types.ts
 
 export function ProjectDetail() {
   const { projectId } = useParams<{ projectId: string }>();
@@ -29,7 +11,7 @@ export function ProjectDetail() {
   const [error, setError] = useState<string | null>(null);
   const [darkMode, setDarkMode] = useState<boolean>(false);
   const [draggedTask, setDraggedTask] = useState<Task | null>(null);
-  const [draggedOver, setDraggedOver] = useState<TaskStatus | null>(null);
+  const [draggedOver, setDraggedOver] = useState<Task['status'] | null>(null);
 
   useEffect(() => {
     const fetchProject = async () => {
@@ -37,7 +19,7 @@ export function ProjectDetail() {
         if (projectId) {
           setLoading(true); // Set loading before fetching
           const data = await apiService.getProject(projectId); // Use the instance method
-          setProject(data);
+          setProject(data as Project); // Add this assertion temporarily
         }
       } catch (err) {
         setError('Failed to fetch project');
@@ -59,7 +41,7 @@ export function ProjectDetail() {
     // Consider a custom drag image if needed, but default is often fine.
     // e.dataTransfer.setDragImage(e.currentTarget, 0, 0);
   };
-
+  
   const handleDragOver = (e: React.DragEvent<HTMLDivElement>, status: TaskStatus): void => {
     e.preventDefault();
     e.dataTransfer.dropEffect = 'move';
@@ -70,22 +52,27 @@ export function ProjectDetail() {
     setDraggedOver(null);
   };
 
-  const handleDrop = (e: React.DragEvent<HTMLDivElement>, newStatus: TaskStatus): void => {
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>, newStatus: Task['status']): void => {
     e.preventDefault();
     setDraggedOver(null);
 
     const taskId = e.dataTransfer.getData('text/plain'); // Get task ID from dataTransfer
 
     if (project && taskId) {
-      const draggedTask = project.tasks.find(task => task._id === taskId);
+      const draggedTask = (project.tasks as (string | Task)[]).find(task => typeof task !== 'string' && task._id === taskId);
 
-      if (draggedTask && draggedTask.status !== newStatus) {
+      // Check if the found item is actually a Task object before accessing properties
+      if (typeof draggedTask !== 'object' || draggedTask === null || !('status' in draggedTask)) {
+        console.error('Dragged task is not a valid Task object');
+        return; // Exit if not a valid Task object
+      }
+      if (draggedTask.status !== newStatus) {
         // Optimistically update the UI
         setProject(prev => {
           if (!prev) return null;
           return {
             ...prev,
-            tasks: prev.tasks.map(task =>
+            tasks: (prev.tasks as Task[]).map(task => // Added assertion here as we expect Task[] after fetch
               task._id === taskId
                 ? { ...task, status: newStatus }
                 : task
@@ -103,7 +90,12 @@ export function ProjectDetail() {
 
   const getTasksByStatus = (status: TaskStatus): Task[] => {
     if (!project) return [];
-    return project.tasks.filter(task => task.status === status);
+    // Check if tasks are populated (Task[]) or just IDs (string[])
+    if (Array.isArray(project.tasks) && project.tasks.length > 0 && typeof project.tasks[0] === 'object') {
+      return (project.tasks as Task[]).filter(task => task.status === status);
+    }
+    // If tasks are just IDs or empty, return an empty array (cannot filter by status)
+    return [];
   };
 
   const renderColumn = (title: string, status: TaskStatus, color: string): JSX.Element => {
@@ -287,7 +279,7 @@ export function ProjectDetail() {
               ? 'bg-green-900 text-green-200'
               : 'bg-green-100 text-green-800'
           )}
-        </div>
+        </div>  
 
         {/* Project Stats */}
         <div className="mt-8 grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -298,7 +290,7 @@ export function ProjectDetail() {
               darkMode ? 'text-gray-400' : 'text-gray-500'
             }`}>
               Total Tasks
-            </h3>
+            </h3> {/* Changed to Total Tasks */}
             <p className={`text-2xl font-bold ${
               darkMode ? 'text-white' : 'text-gray-900'
             }`}>

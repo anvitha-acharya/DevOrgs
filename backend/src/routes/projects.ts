@@ -1,16 +1,15 @@
 import express from 'express';
 import {
   createProject,
-  getAllProjects,
-  getProjectById,
+  getProjects,
   updateProject,
   deleteProject,
 } from '../controllers/projectController';
-import { protect } from '../middleware/authMiddleware'; // Assuming your auth middleware is here
+import { protect } from '../middleware/authMiddleware';
 
 const router = express.Router();
 
-router.route('/').post(protect, createProject).get(protect, getAllProjects);
-router.route('/:id').get(protect, getProjectById); // Add update and delete later
-
+router.route('/').post(protect, createProject).get(protect, getProjects);
+router.route('/:id').get(protect, getProjects).put(protect, updateProject).delete(protect, deleteProject);
+// Corrected import name from getAllProjects to getProjects
 export default router;
