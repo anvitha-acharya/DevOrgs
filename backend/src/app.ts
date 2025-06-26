@@ -14,7 +14,8 @@ app.use(cors({
   origin: [
     'http://localhost:4173',  // Vite dev server
     'http://localhost:3000',  // Alternative dev port
-    'http://127.0.0.1:5173'   // Alternative localhost
+    'http://127.0.0.1:5173',
+    'https://devorgs-frontend.onrender.com'   // Alternative localhost
   ],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],

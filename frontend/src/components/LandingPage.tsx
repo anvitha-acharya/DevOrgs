@@ -31,7 +31,7 @@ export function LandingPage() {
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
-    const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+    const API_BASE_URL = import.meta.env.VITE_API_URL ;
     e.preventDefault();
 
     if (!isLogin) {
@@ -42,7 +42,7 @@ export function LandingPage() {
       }
 
       try {
-        const res = await axios.post<SignupResponse>(`${API_BASE_URL}/api/auth/signup`, formData);
+        const res = await axios.post<SignupResponse>(`${API_BASE_URL}/auth/signup`, formData);
         alert(res.data.message);
       } catch (err: any) {
         if (err.response && err.response.data && err.response.data.error) {
