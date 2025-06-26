@@ -11,12 +11,7 @@ interface Task {
   createdAt: string | Date;
 }
 
-interface Project {
-  id: string;
-  title: string;
-  description: string;
-  tasks: Task[];
-}
+import type { Project } from '../types';
 
 type TaskStatus = Task['status'];
 

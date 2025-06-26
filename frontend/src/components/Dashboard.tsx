@@ -30,8 +30,10 @@ export function Dashboard() {
   };
 
   // Handle project updates from ProjectDetail
-  const handleProjectUpdate = (updatedProject: Project) => {
-    dispatch({ type: 'UPDATE_PROJECT', payload: updatedProject });
+  const handleProjectUpdate = (project: Project) => {
+    dispatch({ type: 'UPDATE_PROJECT', payload: project });
+    // Update the selected project to reflect changes
+    setSelectedProject(project);
   };
 
   if (selectedProject) {
