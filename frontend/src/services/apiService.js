@@ -1,8 +1,8 @@
-import axios from 'axios';
+// apiService.js - Fixed version with proper class declaration and export
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || '/api';
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
 
-class ApiService { 
+class ApiService {
   constructor() {
     this.token = localStorage.getItem('authToken');
   }
@@ -25,81 +25,27 @@ class ApiService {
     };
   }
 
-  // Generic axios wrapper
- async request(method, endpoint, data = null) {
+  // Generic fetch wrapper
+  async fetchApi(endpoint, options = {}) {
     const url = `${API_BASE_URL}${endpoint}`;
     const config = {
-      method,
-      url,
       headers: this.getAuthHeaders(),
-      data: data ? data : undefined,
+      ...options,
     };
+
     try {
-      const response = await axios(config);
-      return response.data;
+      const response = await fetch(url, config);
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+      }
+
+      return await response.json();
     } catch (error) {
-      console.error('API Error:', error.response ? error.response.data : error.message);
-      throw error.response ? error.response.data : new Error(error.message);
+      console.error('API Error:', error);
+      throw error;
     }
-  }
-
-  // Auth methods
-  async signup(userData) {
-    const response = await this.request('POST', '/auth/signup', userData);
-    if (response.token) {
-      this.setAuthToken(response.token);
-    }
-    return response;
-  }
-
-  async login(credentials) {
-    const response = await this.request('POST', '/auth/login', credentials);
-    if (response.token) {
-      this.setAuthToken(response.token);
-    }
-    return response;
-  }
-
-  logout() {
-    this.setAuthToken(null);
-  }
-
-  // Project methods
-  async getProjects() {
-    return await this.request('GET', '/projects');
-  }
-
-  async createProject(projectData) {
-    return await this.request('POST', '/projects', projectData);
-  }
-
-  async getProject(projectId) {
-    return await this.request('GET', `/projects/${projectId}`);
-  }
-
-  async updateProject(projectId, projectData) {
-    return await this.request('PUT', `/projects/${projectId}`, projectData);
-  }
-
-  async deleteProject(projectId) {
- return await this.request('DELETE', `/projects/${projectId}`);
-  }
-
-  // Task methods
-  async createTask(projectId, taskData) {
- return await this.request('POST', `/projects/${projectId}/tasks`, taskData);
-  }
-
-  async updateTaskStatus(taskId, status) {
- return await this.request('PUT', `/tasks/${taskId}/status`, { status });
-  }
-
-  async updateTask(taskId, taskData) {
- return await this.request('PUT', `/tasks/${taskId}`, taskData);
-  }
-
-  async deleteTask(taskId) {
- return await this.request('DELETE', `/tasks/${taskId}`);
   }
 
   // Auth methods
@@ -131,6 +77,63 @@ class ApiService {
 
   logout() {
     this.setAuthToken(null);
+  }
+
+  // Project methods
+  async getProjects() {
+    return await this.fetchApi('/projects');
+  }
+
+  async createProject(projectData) {
+    return await this.fetchApi('/projects', {
+      method: 'POST',
+      body: JSON.stringify(projectData),
+    });
+  }
+
+  async getProject(projectId) {
+    return await this.fetchApi(`/projects/${projectId}`);
+  }
+
+  async updateProject(projectId, projectData) {
+    return await this.fetchApi(`/projects/${projectId}`, {
+      method: 'PUT',
+      body: JSON.stringify(projectData),
+    });
+  }
+
+  async deleteProject(projectId) {
+    return await this.fetchApi(`/projects/${projectId}`, {
+      method: 'DELETE',
+    });
+  }
+
+  // Task methods
+  async createTask(projectId, taskData) {
+    return await this.fetchApi(`/projects/${projectId}/tasks`, {
+      method: 'POST',
+      body: JSON.stringify(taskData),
+    });
+  }
+
+  async updateTaskStatus(taskId, status) {
+    return await this.fetchApi(`/tasks/${taskId}/status`, {
+      method: 'PUT',
+      body: JSON.stringify({ status }),
+    });
+  }
+
+  async updateTask(taskId, taskData) {
+    return await this.fetchApi(`/tasks/${taskId}`, {
+      method: 'PUT',
+      body: JSON.stringify(taskData),
+    });
+  }
+
+  async deleteTask(taskId) {
+    return await this.fetchApi(`/tasks/${taskId}`, {
+      method: 'DELETE',
+    });
   }
 
   // User profile methods

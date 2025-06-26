@@ -1,63 +1,77 @@
-import React, { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import React, { useState } from 'react';
 import { ArrowLeft, Calendar, User, Plus } from 'lucide-react';
-import apiService from '../services/apiService'; // Import the default exported instance
 
-// TypeScript types (ensure these match your backend response)
+// TypeScript types
 interface Task {
-  _id: string;
-  name: string;
-  description?: string;
-  status: 'todo' | 'in-progress' | 'done'; // Ensure status values match backend
-  assignedTo?: string; // Assuming assignedTo is a string ID or name
+  id: string;
+  title: string;
+  description: string;
+  status: 'todo' | 'in-progress' | 'completed';
+  createdBy: string;
   createdAt: string;
 }
 
 interface Project {
-  _id: string;
-  name: string;
-  description?: string;
+  id: string;
+  title: string;
+  description: string;
   tasks: Task[];
 }
 
 type TaskStatus = Task['status'];
 
+// Mock data structure
+const initialProject: Project = {
+  id: '1',
+  title: 'Project Management System',
+  description: 'A comprehensive project management tool with drag and drop functionality',
+  tasks: [
+    {
+      id: 'task-1',
+      title: 'Design Database Schema',
+      description: 'Create the database structure for the project management system',
+      status: 'todo',
+      createdBy: 'John Doe',
+      createdAt: '2024-01-15T10:30:00Z'
+    },
+    {
+      id: 'task-2',
+      title: 'Implement Authentication',
+      description: 'Set up user authentication and authorization',
+      status: 'in-progress',
+      createdBy: 'Jane Smith',
+      createdAt: '2024-01-16T14:20:00Z'
+    },
+    {
+      id: 'task-3',
+      title: 'Create Landing Page',
+      description: 'Design and develop the main landing page',
+      status: 'completed',
+      createdBy: 'Mike Johnson',
+      createdAt: '2024-01-14T09:15:00Z'
+    },
+    {
+      id: 'task-4',
+      title: 'Setup CI/CD Pipeline',
+      description: 'Configure continuous integration and deployment',
+      status: 'todo',
+      createdBy: 'Sarah Wilson',
+      createdAt: '2024-01-17T11:45:00Z'
+    }
+  ]
+};
+
 export function ProjectDetail() {
-  const { projectId } = useParams<{ projectId: string }>();
-  const [project, setProject] = useState<Project | null>(null);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
+  const [project, setProject] = useState<Project>(initialProject);
   const [darkMode, setDarkMode] = useState<boolean>(false);
   const [draggedTask, setDraggedTask] = useState<Task | null>(null);
   const [draggedOver, setDraggedOver] = useState<TaskStatus | null>(null);
 
-  useEffect(() => {
-    const fetchProject = async () => {
-      try {
-        if (projectId) {
-          setLoading(true); // Set loading before fetching
-          const data = await apiService.getProject(projectId); // Use the instance method
-          setProject(data);
-        }
-      } catch (err) {
-        setError('Failed to fetch project');
-        console.error(err);
-      } finally {
-        setLoading(false); // Set loading to false after fetching
-      }
-    };
-
-    fetchProject();
-  }, [projectId]); // Dependency array includes projectId
-
   const handleDragStart = (e: React.DragEvent<HTMLDivElement>, task: Task): void => {
     setDraggedTask(task);
     e.dataTransfer.effectAllowed = 'move';
-    // It's generally not recommended to set dataTransfer with complex HTML.
-    // A better approach is to transfer the task ID or a string representation.
-    e.dataTransfer.setData('text/plain', task._id);
-    // Consider a custom drag image if needed, but default is often fine.
-    // e.dataTransfer.setDragImage(e.currentTarget, 0, 0);
+    e.dataTransfer.setData('text/html', (e.target as HTMLElement).outerHTML);
+    e.dataTransfer.setDragImage(e.currentTarget, 0, 0);
   };
 
   const handleDragOver = (e: React.DragEvent<HTMLDivElement>, status: TaskStatus): void => {
@@ -73,36 +87,21 @@ export function ProjectDetail() {
   const handleDrop = (e: React.DragEvent<HTMLDivElement>, newStatus: TaskStatus): void => {
     e.preventDefault();
     setDraggedOver(null);
-
-    const taskId = e.dataTransfer.getData('text/plain'); // Get task ID from dataTransfer
-
-    if (project && taskId) {
-      const draggedTask = project.tasks.find(task => task._id === taskId);
-
-      if (draggedTask && draggedTask.status !== newStatus) {
-        // Optimistically update the UI
-        setProject(prev => {
-          if (!prev) return null;
-          return {
-            ...prev,
-            tasks: prev.tasks.map(task =>
-              task._id === taskId
-                ? { ...task, status: newStatus }
-                : task
-            )
-          };
-        });
-
-        // TODO: Call backend API to update task status
-        // updateTaskStatus(taskId, newStatus); // You'll need to implement updateTaskStatus in apiService
-      }
+    
+    if (draggedTask && draggedTask.status !== newStatus) {
+      setProject(prev => ({
+        ...prev,
+        tasks: prev.tasks.map(task => 
+          task.id === draggedTask.id 
+            ? { ...task, status: newStatus }
+            : task
+        )
+      }));
     }
     setDraggedTask(null);
   };
 
-
   const getTasksByStatus = (status: TaskStatus): Task[] => {
-    if (!project) return [];
     return project.tasks.filter(task => task.status === status);
   };
 
@@ -111,10 +110,7 @@ export function ProjectDetail() {
     const isDraggedOver = draggedOver === status;
 
     return (
-      <div
-        key={status} // Add a key to the column div
-        className={`flex-1 ${darkMode ? 'bg-gray-800' : 'bg-gray-50'} rounded-lg p-4 transition-all duration-200`}
-      >
+      <div className={`flex-1 ${darkMode ? 'bg-gray-800' : 'bg-gray-50'} rounded-lg p-4 transition-all duration-200`}>
         <div className="flex items-center justify-between mb-4">
           <h3 className={`font-semibold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
             {title}
@@ -138,11 +134,11 @@ export function ProjectDetail() {
         >
           {tasks.map((task) => (
             <div
-              key={task._id} // Use _id as key
+              key={task.id}
               draggable
               onDragStart={(e: React.DragEvent<HTMLDivElement>) => handleDragStart(e, task)}
               className={`p-4 rounded-lg border transition-all duration-200 cursor-move select-none ${
-                draggedTask?._id === task._id // Use _id for comparison
+                draggedTask?.id === task.id
                   ? 'opacity-50 transform rotate-2'
                   : 'hover:shadow-md hover:scale-105'
               } ${
@@ -154,7 +150,7 @@ export function ProjectDetail() {
               <h4 className={`font-medium mb-2 ${
                 darkMode ? 'text-white' : 'text-gray-900'
               }`}>
-                {task.name} {/* Use task.name */}
+                {task.title}
               </h4>
               {task.description && (
                 <p className={`text-sm mb-3 ${
@@ -169,7 +165,7 @@ export function ProjectDetail() {
                     darkMode ? 'text-gray-500' : 'text-gray-400'
                   }`} />
                   <span className={darkMode ? 'text-gray-500' : 'text-gray-400'}>
-                    {task.assignedTo || 'Unassigned'} {/* Use task.assignedTo */}
+                    {task.createdBy}
                   </span>
                 </div>
                 <div className="flex items-center space-x-1">
@@ -183,26 +179,10 @@ export function ProjectDetail() {
               </div>
             </div>
           ))}
-           {/* Add a placeholder for empty columns to make them drop targets */}
-           {tasks.length === 0 && (
-            <div className="h-full min-h-[100px]"></div>
-           )}
         </div>
       </div>
     );
   };
-
-  if (loading) {
-    return <div>Loading project...</div>;
-  }
-
-  if (error) {
-    return <div>Error: {error}</div>;
-  }
-
-  if (!project) {
-    return <div>Project not found.</div>;
-  }
 
   return (
     <div className={`min-h-screen transition-colors duration-300 ${
@@ -221,7 +201,6 @@ export function ProjectDetail() {
                     ? 'hover:bg-gray-700 text-gray-400'
                     : 'hover:bg-gray-100 text-gray-600'
                 }`}
-                onClick={() => window.history.back()} // Go back
               >
                 <ArrowLeft className="h-5 w-5" />
               </button>
@@ -229,7 +208,7 @@ export function ProjectDetail() {
                 <h1 className={`text-2xl font-bold ${
                   darkMode ? 'text-white' : 'text-gray-900'
                 }`}>
-                  {project.name} {/* Use project.name */}
+                  {project.title}
                 </h1>
                 <p className={`text-sm ${
                   darkMode ? 'text-gray-400' : 'text-gray-500'
@@ -282,7 +261,7 @@ export function ProjectDetail() {
           )}
           {renderColumn(
             'Completed',
-            'done', // Use 'done' to match backend
+            'completed',
             darkMode
               ? 'bg-green-900 text-green-200'
               : 'bg-green-100 text-green-800'
@@ -338,7 +317,7 @@ export function ProjectDetail() {
               Completed
             </h3>
             <p className="text-2xl font-bold text-green-600">
-              {getTasksByStatus('done').length} {/* Use 'done' */}
+              {getTasksByStatus('completed').length}
             </p>
           </div>
         </div>
