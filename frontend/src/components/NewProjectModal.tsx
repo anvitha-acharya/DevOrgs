@@ -225,7 +225,7 @@ export function NewProjectModal({ onClose, onSubmit }: NewProjectModalProps) {
 
             <div className="space-y-2">
               {invitedEmails.map((email, index) => (
-                <div key={`email-field-${index}-${email || 'empty'}`} className="flex space-x-2">
+                <div key={index} className="flex space-x-2">
                   <input
                     type="email"
                     value={email}
@@ -281,9 +281,9 @@ export function NewProjectModal({ onClose, onSubmit }: NewProjectModalProps) {
             >
               Create Project
             </button>
-          </div>
-        </form>
+            </div>
+          </form>
+        </div>
       </div>
-    </div>
   );
 }
