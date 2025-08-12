@@ -40,7 +40,7 @@ Built with a **DevOps-first approach**, featuring automated CI/CD pipelines, cod
 
 ### 1. Clone the Repository
 ```bash
-git clone https://github.com/<your-username>/DevOrgs
+git clone https://github.com/anvitha-acharya/DevOrgs
 cd DevOrgs
 ```
 ### 2. Setup Frontend
